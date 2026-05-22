@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.example</groupId>
+    <artifactId>ai-chat-backend</artifactId>
+    <version>1.0.0</version>
+    <name>AI Chat Backend</name>
+    <description>AI Chat Backend Service</description>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <!--
+        Stage 0 依赖最小集。后续 Stage 按需增量添加:
+          Stage 1: validation, mybatis-plus-boot-starter, mysql-connector-j, flyway-core, flyway-mysql
+          Stage 3: spring-boot-starter-security, jjwt-api/impl/jackson, spring-security-test
+          Stage 4: (model 模块沿用 MP)
+          Stage 6: spring-ai-bom + spring-ai-starter-model-{openai,anthropic,ollama}
+          Stage 2-起: org.testcontainers junit-jupiter + mysql
+        详见《后端规划-Phase1施工DAG与验收清单.md》§十二与各 Stage "产出物清单"。
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

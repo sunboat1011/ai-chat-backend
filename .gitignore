@@ -1,0 +1,39 @@
+# ===== Build output =====
+target/
+build/
+out/
+
+# ===== Maven =====
+.mvn/
+mvnw
+mvnw.cmd
+*.versionsBackup
+
+# ===== IDE =====
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+
+# ===== Logs =====
+logs/
+*.log
+
+# ===== Environment / secrets =====
+.env
+.env.*
+!.env.example
+*.local
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== JVM =====
+hs_err_pid*.log
+replay_pid*.log

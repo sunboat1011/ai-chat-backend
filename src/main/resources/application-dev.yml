@@ -1,0 +1,9 @@
+# ==========================================
+# AI Chat Backend - dev profile overrides
+# Stage 0: 仅占位,本 Stage 无需 dev 特有配置
+# 后续 Stage 在此覆盖本地 DB 连接、密钥等
+# ==========================================
+
+logging:
+  level:
+    com.example.aichat: DEBUG

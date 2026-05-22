@@ -1,0 +1,33 @@
+# ==========================================
+# AI Chat Backend - Application Config
+# Stage 0: 最小化配置,仅启动 Web + Actuator
+# 数据库/JWT/AI 等模块化配置在对应 Stage 引入
+# ==========================================
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: ai-chat-backend
+  profiles:
+    active: dev
+
+# ----- Actuator 健康检查暴露 -----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# ----- Logging -----
+logging:
+  level:
+    root: INFO
+    com.example.aichat: INFO
+    org.springframework.web: INFO
