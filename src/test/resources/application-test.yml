@@ -1,0 +1,27 @@
+# Test profile: in-memory H2 database, disable Flyway
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  flyway:
+    enabled: false
+
+  sql:
+    init:
+      mode: never
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+# Dev test keys
+ai:
+  encryption:
+    key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+
+jwt:
+  secret: test-secret-key-must-be-at-least-32-characters-long-for-hs256
