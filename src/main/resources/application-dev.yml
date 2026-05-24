@@ -1,9 +1,30 @@
 # ==========================================
 # AI Chat Backend - dev profile overrides
-# Stage 0: 仅占位,本 Stage 无需 dev 特有配置
-# 后续 Stage 在此覆盖本地 DB 连接、密钥等
+# Stage 1: dev-only encryption key + Jackson 配置
+# 数据库配置（datasource / flyway）在 Stage 2 引入
 # ==========================================
+
+spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+  flyway:
+    enabled: false
+
+# Dev-only AES key: Base64(0x00 * 32)
+ai:
+  encryption:
+    key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+
+# Dev-only JWT secret (minimum 256 bits for HS256)
+jwt:
+  secret: dev-secret-key-must-be-at-least-32-characters-long-for-hs256
 
 logging:
   level:
     com.example.aichat: DEBUG
+    org.springframework.web: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{requestId}] %logger{36} - %msg%n"
