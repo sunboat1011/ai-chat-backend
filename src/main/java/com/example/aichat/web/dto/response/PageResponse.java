@@ -26,4 +26,15 @@ public class PageResponse<T> {
             .hasNext(page.getCurrent() < page.getPages())
             .build();
     }
+
+    public <R> PageResponse<R> map(java.util.function.Function<T, R> mapper) {
+        return PageResponse.<R>builder()
+            .content(content.stream().map(mapper).toList())
+            .page(page)
+            .size(size)
+            .totalElements(totalElements)
+            .totalPages(totalPages)
+            .hasNext(hasNext)
+            .build();
+    }
 }
