@@ -38,6 +38,19 @@ mybatis-plus:
       insert-strategy: not_null
       update-strategy: not_null
 
+# ----- Datasource (values overridden in dev/test profiles) -----
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/aichat?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true}
+    username: ${MYSQL_USER:aichat}
+    password: ${MYSQL_PASSWORD:aichat}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ----- Flyway -----
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
 # ----- AI Encryption -----
 ai:
   encryption:
