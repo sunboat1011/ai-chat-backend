@@ -55,8 +55,15 @@ class AuthControllerIT {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.update("DELETE FROM model_configs");
         jdbcTemplate.update("DELETE FROM user_settings");
         jdbcTemplate.update("DELETE FROM users");
+
+        // 插入一条启用的内置模型（BuiltInModelInitializer 在 test profile 下不运行）
+        jdbcTemplate.update("""
+            INSERT INTO model_configs (id, user_id, display_name, provider, api_base_url, api_key, model_name, is_builtin, is_enabled, created_at, updated_at)
+            VALUES ('gpt-4o-mini', NULL, 'GPT-4o Mini', 'openai', 'https://api.openai.com', 'enc-key', 'gpt-4o-mini', true, true, NOW(), NOW())
+            """);
     }
 
     @Test
@@ -86,6 +93,12 @@ class AuthControllerIT {
             "SELECT COUNT(*) FROM user_settings WHERE user_id = (SELECT id FROM users WHERE username = ?)",
             Long.class, "alice");
         assertThat(settingsCount).isEqualTo(1);
+
+        // 验证 default_model_id 已设置为第一个启用的内置模型
+        String defaultModelId = jdbcTemplate.queryForObject(
+            "SELECT default_model_id FROM user_settings WHERE user_id = (SELECT id FROM users WHERE username = ?)",
+            String.class, "alice");
+        assertThat(defaultModelId).isEqualTo("gpt-4o-mini");
     }
 
     @Test

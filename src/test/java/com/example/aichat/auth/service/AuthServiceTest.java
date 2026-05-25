@@ -37,6 +37,8 @@ class AuthServiceTest {
     private JwtTokenProvider tokenProvider;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private com.example.aichat.model.service.ModelConfigService modelConfigService;
 
     @InjectMocks
     private AuthService authService;
@@ -57,6 +59,7 @@ class AuthServiceTest {
 
         when(userMapper.existsByUsername("alice")).thenReturn(false);
         when(userMapper.existsByEmail("alice@example.com")).thenReturn(false);
+        when(modelConfigService.getFirstEnabledBuiltInModelId()).thenReturn("gpt-4o-mini");
         when(passwordEncoder.encode("alice123")).thenReturn("$2a$10$encoded");
         // mock insert 回填 auto-increment ID（模拟 MyBatis-Plus 行为）
         doAnswer(inv -> {

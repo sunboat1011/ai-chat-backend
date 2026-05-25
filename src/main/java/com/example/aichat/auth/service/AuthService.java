@@ -5,6 +5,7 @@ import com.example.aichat.auth.mapper.UserMapper;
 import com.example.aichat.auth.security.JwtTokenProvider;
 import com.example.aichat.common.exception.BusinessException;
 import com.example.aichat.common.exception.ErrorCode;
+import com.example.aichat.model.service.ModelConfigService;
 import com.example.aichat.user.entity.UserSettings;
 import com.example.aichat.user.mapper.UserSettingsMapper;
 import com.example.aichat.web.dto.request.LoginRequest;
@@ -26,6 +27,7 @@ public class AuthService {
     private final UserSettingsMapper userSettingsMapper;
     private final JwtTokenProvider tokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final ModelConfigService modelConfigService;
 
     @Transactional
     public TokenResponse register(RegisterRequest request) {
@@ -45,7 +47,6 @@ public class AuthService {
         userMapper.insert(user);
 
         // 初始化默认用户设置
-        // TODO: Stage 4 完成后，从 model_config 查询第一个启用的内置模型作为 defaultModelId
         UserSettings settings = createDefaultSettings(user.getId());
         userSettingsMapper.insert(settings);
 
@@ -66,11 +67,12 @@ public class AuthService {
     }
 
     private UserSettings createDefaultSettings(Long userId) {
+        String defaultModelId = modelConfigService.getFirstEnabledBuiltInModelId();
         return UserSettings.builder()
             .userId(userId)
             .theme("system")
             .accentColor("#3b82f6")
-            .defaultModelId(null)  // Stage 4 完成后补查询
+            .defaultModelId(defaultModelId)
             .defaultTemperature(new BigDecimal("0.7"))
             .defaultMaxTokens(2048)
             .defaultTopP(new BigDecimal("1.0"))
