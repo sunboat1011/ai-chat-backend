@@ -67,8 +67,9 @@ public class DynamicChatModelFactory {
     }
 
     private ChatModel createOpenAiModel(ModelConfig config) {
+        String baseUrl = normalizeBaseUrl(config.getApiBaseUrl());
         OpenAiApi api = OpenAiApi.builder()
-            .baseUrl(config.getApiBaseUrl())
+            .baseUrl(baseUrl)
             .apiKey(decryptKey(config.getApiKey()))
             .build();
 
@@ -83,8 +84,53 @@ public class DynamicChatModelFactory {
     }
 
     private ChatModel createOpenAiCompatibleModel(ModelConfig config) {
-        // 智谱 AI、Custom 等 OpenAI 兼容接口统一走 OpenAiChatModel
-        return createOpenAiModel(config);
+        String baseUrl = normalizeBaseUrl(config.getApiBaseUrl());
+        String apiKey = decryptKey(config.getApiKey());
+
+        OpenAiApi.Builder apiBuilder = OpenAiApi.builder()
+            .baseUrl(baseUrl);
+
+        if ("custom".equalsIgnoreCase(config.getProvider()) && apiKey != null && !apiKey.isBlank()) {
+            // MiMo 等 Custom provider 使用 api-key header 而非 Authorization: Bearer
+            // OpenAiApi.Builder 强制要求 apiKey 非空，先传 dummy 满足校验，
+            // 再通过 interceptor/filter 把 Authorization 替换成 api-key
+            org.springframework.web.client.RestClient.Builder restClientBuilder =
+                org.springframework.web.client.RestClient.builder()
+                    .requestInterceptor((request, body, execution) -> {
+                        request.getHeaders().remove("Authorization");
+                        request.getHeaders().add("api-key", apiKey);
+                        return execution.execute(request, body);
+                    });
+            org.springframework.web.reactive.function.client.WebClient.Builder webClientBuilder =
+                org.springframework.web.reactive.function.client.WebClient.builder()
+                    .filter((request, next) -> {
+                        org.springframework.web.reactive.function.client.ClientRequest newRequest =
+                            org.springframework.web.reactive.function.client.ClientRequest.from(request)
+                                .headers(headers -> {
+                                    headers.remove("Authorization");
+                                    headers.add("api-key", apiKey);
+                                })
+                                .build();
+                        return next.exchange(newRequest);
+                    });
+            apiBuilder.apiKey("dummy")
+                .restClientBuilder(restClientBuilder)
+                .webClientBuilder(webClientBuilder);
+        } else {
+            // 智谱 AI 等标准 OpenAI-compatible 使用 Authorization: Bearer
+            apiBuilder.apiKey(apiKey);
+        }
+
+        OpenAiApi api = apiBuilder.build();
+
+        OpenAiChatOptions options = OpenAiChatOptions.builder()
+            .model(config.getModelName())
+            .build();
+
+        return OpenAiChatModel.builder()
+            .openAiApi(api)
+            .defaultOptions(options)
+            .build();
     }
 
     private ChatModel createOllamaModel(ModelConfig config) {
@@ -140,5 +186,24 @@ public class DynamicChatModelFactory {
             return null;
         }
         return encryptor.decrypt(encryptedKey);
+    }
+
+    /**
+     * 规范化 OpenAI-compatible 的 base URL。
+     * 如果用户填了带 /v1 后缀的地址，自动去掉，避免 Spring AI 内部再追加一层 /v1。
+     */
+    private String normalizeBaseUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return url;
+        }
+        String trimmed = url.trim();
+        // 去掉末尾的 /v1（不区分大小写，支持 /v1/ 和 /v1）
+        if (trimmed.toLowerCase().endsWith("/v1")) {
+            return trimmed.substring(0, trimmed.length() - 3);
+        }
+        if (trimmed.toLowerCase().endsWith("/v1/")) {
+            return trimmed.substring(0, trimmed.length() - 4);
+        }
+        return trimmed;
     }
 }

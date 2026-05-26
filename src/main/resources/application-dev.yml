@@ -21,13 +21,19 @@ spring:
     baseline-on-migrate: true
     locations: classpath:db/migration
 
-  # Dev-only Spring AI dummy key (auto-config requires a non-empty key)
+  # Spring AI auto-config placeholder (not used for business calls)
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:dummy-dev-key-not-for-production}
+      api-key: ${SPRING_AI_DUMMY:placeholder}
 
-# Dev-only AES key: Base64(0x00 * 32)
+# Built-in model API keys (production should configure these)
 ai:
+  builtin-models:
+    openai:
+      api-key: ${BUILTIN_OPENAI_KEY:your-api-key}
+    anthropic:
+      api-key: ${BUILTIN_ANTHROPIC_KEY:your-api-key}
+  # Dev-only AES key: Base64(0x00 * 32)
   encryption:
     key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 

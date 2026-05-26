@@ -37,15 +37,22 @@ public class ModelConfigService {
 
     @Transactional
     public ModelResponse createCustomModel(CreateCustomModelRequest request, Long userId) {
+        String modelId = request.getModelId() != null && !request.getModelId().isBlank()
+            ? request.getModelId() : IdGenerator.generate("custom");
+
+        if (modelConfigMapper.selectById(modelId) != null) {
+            throw new BusinessException(ErrorCode.CONFLICT, "模型ID已存在: " + modelId);
+        }
+
         ModelConfig config = ModelConfig.builder()
-            .id(IdGenerator.generate("custom"))
+            .id(modelId)
             .userId(userId)
             .displayName(request.getDisplayName())
             .provider(request.getProvider())
             .apiBaseUrl(request.getApiBaseUrl())
             .apiKey(request.getApiKey() != null && !request.getApiKey().isBlank()
                 ? encryptor.encrypt(request.getApiKey()) : null)
-            .modelName(request.getModelName() != null ? request.getModelName() : request.getModelId())
+            .modelName(request.getModelName() != null ? request.getModelName() : modelId)
             .isBuiltin(false)
             .isEnabled(true)
             .build();

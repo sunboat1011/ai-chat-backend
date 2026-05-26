@@ -11,6 +11,7 @@ public enum ErrorCode {
     UNAUTHORIZED("UNAUTHORIZED", "未登录或Token已过期", 401),
     FORBIDDEN("FORBIDDEN", "无权访问", 403),
     NOT_FOUND("NOT_FOUND", "资源不存在", 404),
+    CONFLICT("CONFLICT", "资源冲突", 409),
     MODEL_NOT_FOUND("MODEL_NOT_FOUND", "模型配置不存在", 404),
     MODEL_AUTH_FAILED("MODEL_AUTH_FAILED", "API Key无效", 401),
     MODEL_RATE_LIMITED("MODEL_RATE_LIMITED", "请求过于频繁", 429),

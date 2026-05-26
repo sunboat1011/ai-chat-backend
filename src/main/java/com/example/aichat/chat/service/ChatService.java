@@ -167,6 +167,7 @@ public class ChatService {
                               BigDecimal temperature, Integer maxTokens, BigDecimal topP,
                               Long userId) {
         StringBuilder fullContent = new StringBuilder();
+        int chunkCount = 0;
         try {
             ChatModel chatModel = modelFactory.createModel(modelConfig);
             ChatOptions options = modelFactory.buildOptions(modelConfig, temperature, maxTokens, topP);
@@ -176,6 +177,8 @@ public class ChatService {
 
             Prompt prompt = new Prompt(springAiMessages, options);
 
+            log.debug("Starting stream for assistantMsgId={}, model={}", assistantMsgId, modelConfig.getModelName());
+
             try (Stream<ChatResponse> stream = chatModel.stream(prompt).toStream()) {
                 Iterator<ChatResponse> it = stream.iterator();
                 while (it.hasNext()) {
@@ -184,9 +187,18 @@ public class ChatService {
                     }
                     ChatResponse response = it.next();
                     String chunk = extractText(response);
+                    log.debug("Chunk received: len={}, text={}", chunk != null ? chunk.length() : 0,
+                        chunk != null && chunk.length() > 30 ? chunk.substring(0, 30) + "..." : chunk);
                     if (chunk != null && !chunk.isEmpty()) {
                         fullContent.append(chunk);
-                        emitter.send(SseEmitter.event().name("message").data(chunk));
+                        chunkCount++;
+                        try {
+                            emitter.send(SseEmitter.event().name("message").data(chunk));
+                            log.debug("SSE sent chunk #{}, len={}", chunkCount, chunk.length());
+                        } catch (IOException ioe) {
+                            log.warn("SSE send failed for assistantMsgId={}, client disconnected?", assistantMsgId);
+                            throw ioe;
+                        }
                     }
                 }
             }
@@ -197,6 +209,8 @@ public class ChatService {
 
             // 完成
             String finalContent = fullContent.toString();
+            log.debug("Stream complete for assistantMsgId={}, chunks={}, finalLen={}",
+                assistantMsgId, chunkCount, finalContent.length());
             messageMapper.updateStatusAndContent(assistantMsgId, "done", finalContent);
             emitter.complete();
             eventPublisher.publishEvent(new ChatMessageCreatedEvent(
@@ -208,7 +222,8 @@ public class ChatService {
             emitter.complete();
         } catch (Exception e) {
             log.error("Streaming error for assistantMsgId={}", assistantMsgId, e);
-            messageMapper.updateStatusAndContent(assistantMsgId, "error", null);
+            String partial = fullContent.length() > 0 ? fullContent.toString() : "";
+            messageMapper.updateStatusAndContent(assistantMsgId, "error", partial);
             emitter.completeWithError(e);
         }
     }

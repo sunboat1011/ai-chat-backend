@@ -97,7 +97,7 @@ class ModelControllerIT {
         String token = obtainToken();
 
         String requestBody = """
-            {"displayName":"My Custom GPT","modelId":"gpt-4o","apiBaseUrl":"https://api.example.com","apiKey":"sk-test123","modelName":"gpt-4o","provider":"openai"}
+            {"displayName":"My Custom GPT","modelId":"my-custom-gpt","apiBaseUrl":"https://api.example.com","apiKey":"sk-test123","modelName":"gpt-4o","provider":"openai"}
             """;
 
         MvcResult result = mockMvc.perform(post("/api/models/custom")
@@ -107,7 +107,7 @@ class ModelControllerIT {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SUCCESS"))
             .andExpect(jsonPath("$.data.id").exists())
-            .andExpect(jsonPath("$.data.id").value(org.hamcrest.Matchers.startsWith("custom_")))
+            .andExpect(jsonPath("$.data.id").value("my-custom-gpt"))
             .andExpect(jsonPath("$.data.displayName").value("My Custom GPT"))
             .andExpect(jsonPath("$.data.isBuiltin").value(false))
             .andExpect(jsonPath("$.data.isCustom").value(true))
@@ -141,7 +141,7 @@ class ModelControllerIT {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"displayName":"Old Name","modelId":"gpt-4o","apiBaseUrl":"https://old.com","apiKey":"sk-old","modelName":"gpt-4o","provider":"openai"}
+                    {"displayName":"Old Name","modelId":"my-update-gpt","apiBaseUrl":"https://old.com","apiKey":"sk-old","modelName":"gpt-4o","provider":"openai"}
                     """))
             .andExpect(status().isOk())
             .andReturn();
@@ -171,7 +171,7 @@ class ModelControllerIT {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"displayName":"ToDelete","modelId":"gpt-4o","apiBaseUrl":"https://del.com","apiKey":"sk-del","modelName":"gpt-4o","provider":"openai"}
+                    {"displayName":"ToDelete","modelId":"my-delete-gpt","apiBaseUrl":"https://del.com","apiKey":"sk-del","modelName":"gpt-4o","provider":"openai"}
                     """))
             .andExpect(status().isOk())
             .andReturn();

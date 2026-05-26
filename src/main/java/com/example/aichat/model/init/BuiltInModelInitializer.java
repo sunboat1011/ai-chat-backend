@@ -23,13 +23,13 @@ public class BuiltInModelInitializer implements ApplicationRunner {
     private final ModelConfigMapper modelConfigMapper;
     private final ApiKeyEncryptor encryptor;
 
-    @Value("${OPENAI_API_KEY:}")
+    @Value("${ai.builtin-models.openai.api-key:}")
     private String openaiApiKey;
 
-    @Value("${ANTHROPIC_API_KEY:}")
+    @Value("${ai.builtin-models.anthropic.api-key:}")
     private String anthropicApiKey;
 
-    @Value("${OLLAMA_BASE_URL:http://localhost:11434}")
+    @Value("${ai.builtin-models.ollama.base-url:http://localhost:11434}")
     private String ollamaBaseUrl;
 
     @Override

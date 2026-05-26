@@ -180,7 +180,7 @@ class ChatServiceTest {
         chatService.streamChat(req, userId, emitter);
 
         // Assert
-        verify(messageMapper).updateStatusAndContent(anyString(), eq("error"), isNull());
+        verify(messageMapper).updateStatusAndContent(anyString(), eq("error"), eq(""));
     }
 
     @Test

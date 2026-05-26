@@ -90,27 +90,28 @@ class ModelConfigServiceTest {
     }
 
     @Test
-    void createCustomModel_generatesBackendId() {
+    void createCustomModel_usesFrontendModelId() {
         CreateCustomModelRequest request = new CreateCustomModelRequest();
         request.setDisplayName("My GPT");
-        request.setModelId("gpt-4o");
+        request.setModelId("my-gpt-4o");
         request.setApiBaseUrl("https://api.example.com");
         request.setApiKey("sk-test");
         request.setModelName("gpt-4o");
         request.setProvider("openai");
 
         when(encryptor.encrypt("sk-test")).thenReturn("encrypted-sk-test");
+        when(modelConfigMapper.selectById("my-gpt-4o")).thenReturn(null);
         when(modelConfigMapper.insert(any(ModelConfig.class))).thenReturn(1);
 
         ModelResponse response = modelConfigService.createCustomModel(request, 1L);
 
-        assertThat(response.getId()).startsWith("custom_");
+        assertThat(response.getId()).isEqualTo("my-gpt-4o");
         assertThat(response.getDisplayName()).isEqualTo("My GPT");
         assertThat(response.getIsBuiltin()).isFalse();
         assertThat(response.getIsCustom()).isTrue();
 
         verify(modelConfigMapper).insert(argThat(config ->
-            config.getId().startsWith("custom_") &&
+            config.getId().equals("my-gpt-4o") &&
             config.getUserId().equals(1L) &&
             config.getApiKey().equals("encrypted-sk-test") &&
             Boolean.FALSE.equals(config.getIsBuiltin())
@@ -134,10 +135,10 @@ class ModelConfigServiceTest {
     }
 
     @Test
-    void createCustomModel_ignoresFrontendModelId() {
+    void createCustomModel_generatesId_whenModelIdBlank() {
         CreateCustomModelRequest request = new CreateCustomModelRequest();
         request.setDisplayName("Test");
-        request.setModelId("gpt-4o");        // 前端传的内置模型 id
+        request.setModelId("");              // 前端传空
         request.setApiBaseUrl("https://api.example.com");
         request.setModelName("my-gpt-4");
         request.setProvider("openai");
@@ -146,9 +147,8 @@ class ModelConfigServiceTest {
 
         ModelResponse response = modelConfigService.createCustomModel(request, 1L);
 
-        // 数据库 id 由后端生成，不是 gpt-4o
+        // 数据库 id 由后端生成
         assertThat(response.getId()).startsWith("custom_");
-        assertThat(response.getId()).isNotEqualTo("gpt-4o");
     }
 
     @Test
