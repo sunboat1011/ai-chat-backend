@@ -12,5 +12,6 @@ public class MessageResponse {
     private String role;
     private String content;
     private String modelId;
+    private String status;
     private Instant createdAt;
 }

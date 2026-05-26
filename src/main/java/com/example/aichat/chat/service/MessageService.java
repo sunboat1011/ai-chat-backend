@@ -49,6 +49,7 @@ public class MessageService {
                 .role(message.getRole())
                 .content(message.getContent())
                 .modelId(message.getModelId())
+                .status(message.getStatus())
                 .createdAt(message.getCreatedAt())
                 .build();
     }

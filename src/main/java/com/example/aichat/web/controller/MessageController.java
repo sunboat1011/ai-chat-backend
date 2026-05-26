@@ -4,13 +4,13 @@ import com.example.aichat.auth.security.UserPrincipal;
 import com.example.aichat.chat.entity.Message;
 import com.example.aichat.chat.mapper.ConversationMapper;
 import com.example.aichat.chat.mapper.MessageMapper;
+import com.example.aichat.chat.service.ChatService;
 import com.example.aichat.chat.service.MessageService;
 import com.example.aichat.common.exception.BusinessException;
 import com.example.aichat.common.exception.ErrorCode;
 import com.example.aichat.web.dto.response.ApiResponse;
 import com.example.aichat.web.dto.response.MessageResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class MessageController {
 
+    private final ChatService chatService;
     private final MessageService messageService;
     private final MessageMapper messageMapper;
     private final ConversationMapper conversationMapper;
@@ -40,13 +41,16 @@ public class MessageController {
         return ApiResponse.success(messageService.restoreMessage(id));
     }
 
-    @PostMapping("/conversations/{convId}/messages/{msgId}/regenerate")
-    @ResponseStatus(HttpStatus.NOT_IMPLEMENTED)
-    public ApiResponse<Void> regenerate(
+    @PostMapping(value = "/conversations/{convId}/messages/{msgId}/regenerate",
+                 produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter regenerate(
             @AuthenticationPrincipal UserPrincipal user,
             @PathVariable String convId,
             @PathVariable String msgId) {
-        return ApiResponse.error("NOT_IMPLEMENTED", "重新生成功能将在 Stage 6 实现");
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter =
+            chatService.createEmitter();
+        chatService.regenerate(convId, msgId, user.getId(), emitter);
+        return emitter;
     }
 
     private void verifyMessageOwnership(String messageId, Long userId) {

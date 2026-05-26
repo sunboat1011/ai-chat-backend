@@ -22,7 +22,20 @@
         <java.version>17</java.version>
         <mybatis-plus.version>3.5.6</mybatis-plus.version>
         <mybatis-spring.version>3.0.3</mybatis-spring.version>
+        <spring-ai.version>1.0.0</spring-ai.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <!--
         Stage 0 依赖最小集。后续 Stage 按需增量添加:
@@ -128,6 +141,16 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- ===== Spring AI (Stage 6) ===== -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
         </dependency>
 
         <!-- ===== Testcontainers (Stage 2+) ===== -->

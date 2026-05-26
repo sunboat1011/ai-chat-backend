@@ -55,6 +55,9 @@ mybatis-plus:
 ai:
   encryption:
     key: ${AI_ENCRYPTION_KEY:}
+  chat:
+    context:
+      max-messages: 20
 
 # ----- JWT -----
 jwt:

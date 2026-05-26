@@ -53,4 +53,12 @@ public interface MessageMapper extends BaseMapper<Message> {
      */
     @Update("UPDATE messages SET is_deleted = false, deleted_at = null WHERE id = #{id} AND deleted_at >= #{since}")
     int restore(@Param("id") String id, @Param("since") Instant since);
+
+    /**
+     * 更新消息状态和内容
+     */
+    @Update("UPDATE messages SET status = #{status}, content = #{content} WHERE id = #{id}")
+    int updateStatusAndContent(@Param("id") String id,
+                                @Param("status") String status,
+                                @Param("content") String content);
 }

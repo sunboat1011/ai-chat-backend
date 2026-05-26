@@ -4,15 +4,26 @@ import com.example.aichat.common.util.ApiKeyEncryptor;
 import com.example.aichat.model.entity.ModelConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.ai.ollama.api.OllamaApi;
+import org.springframework.ai.ollama.api.OllamaOptions;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 
 /**
  * 动态 ChatModel 工厂。
- * <p>
- * Stage 4 仅保留骨架：定义 {@link #createModel(ModelConfig)} 方法签名与 provider switch，
- * 所有分支当前抛出 {@link UnsupportedOperationException}。Stage 6 引入 Spring AI 依赖后填充实现。
  *
- * @see <a href="https://github.com/spring-projects/spring-ai">Spring AI</a>
+ * <p>
+ * 根据 {@link ModelConfig} 动态构造对应 provider 的 {@link ChatModel} 实例。
+ * 所有 LLM 调用必须经由本工厂，禁止任何 Service 直接 {@code new OpenAiChatModel(...)}。
+ *
+ * @see <a href="https://docs.spring.io/spring-ai/reference/1.0/api/chatclient.html">Spring AI ChatClient</a>
  */
 @Slf4j
 @Component
@@ -23,45 +34,105 @@ public class DynamicChatModelFactory {
 
     /**
      * 根据 ModelConfig 动态构造 ChatModel 实例。
-     * <p>
-     * <b>Stage 4</b>：返回 {@code Object} 占位，实际实现待 Stage 6 完成（返回类型将改为
-     * {@code org.springframework.ai.chat.model.ChatModel}）。
      *
      * @param config 模型配置
-     * @return 当前始终抛出异常
+     * @return 对应 provider 的 ChatModel
      */
-    public Object createModel(ModelConfig config) {
+    public ChatModel createModel(ModelConfig config) {
         String provider = config.getProvider();
         log.debug("Creating ChatModel for provider={}, model={}", provider, config.getModelName());
 
         return switch (provider.toLowerCase()) {
             case "openai" -> createOpenAiModel(config);
-            case "anthropic" -> createAnthropicModel(config);
             case "ollama" -> createOllamaModel(config);
-            case "zhipuai" -> createZhipuModel(config);
-            case "custom" -> createOpenAiCompatibleModel(config);
+            case "zhipuai", "custom" -> createOpenAiCompatibleModel(config);
+            case "anthropic" -> throw new UnsupportedOperationException(
+                "Anthropic provider not yet supported in this version. " +
+                "Please use a custom OpenAI-compatible endpoint instead.");
             default -> throw new IllegalArgumentException("不支持的模型提供商: " + provider);
         };
     }
 
-    private Object createOpenAiModel(ModelConfig config) {
-        throw new UnsupportedOperationException("filled in Stage 6");
+    /**
+     * 根据运行时参数构建对应 provider 的 ChatOptions。
+     */
+    public ChatOptions buildOptions(ModelConfig config, BigDecimal temperature,
+                                    Integer maxTokens, BigDecimal topP) {
+        String provider = config.getProvider().toLowerCase();
+        return switch (provider) {
+            case "openai", "zhipuai", "custom" -> buildOpenAiOptions(config, temperature, maxTokens, topP);
+            case "ollama" -> buildOllamaOptions(config, temperature, maxTokens, topP);
+            default -> throw new IllegalArgumentException("不支持的模型提供商: " + provider);
+        };
     }
 
-    private Object createAnthropicModel(ModelConfig config) {
-        throw new UnsupportedOperationException("filled in Stage 6");
+    private ChatModel createOpenAiModel(ModelConfig config) {
+        OpenAiApi api = OpenAiApi.builder()
+            .baseUrl(config.getApiBaseUrl())
+            .apiKey(decryptKey(config.getApiKey()))
+            .build();
+
+        OpenAiChatOptions options = OpenAiChatOptions.builder()
+            .model(config.getModelName())
+            .build();
+
+        return OpenAiChatModel.builder()
+            .openAiApi(api)
+            .defaultOptions(options)
+            .build();
     }
 
-    private Object createOllamaModel(ModelConfig config) {
-        throw new UnsupportedOperationException("filled in Stage 6");
+    private ChatModel createOpenAiCompatibleModel(ModelConfig config) {
+        // 智谱 AI、Custom 等 OpenAI 兼容接口统一走 OpenAiChatModel
+        return createOpenAiModel(config);
     }
 
-    private Object createZhipuModel(ModelConfig config) {
-        throw new UnsupportedOperationException("filled in Stage 6");
+    private ChatModel createOllamaModel(ModelConfig config) {
+        OllamaApi api = OllamaApi.builder()
+            .baseUrl(config.getApiBaseUrl())
+            .build();
+
+        OllamaOptions options = OllamaOptions.builder()
+            .model(config.getModelName())
+            .build();
+
+        return OllamaChatModel.builder()
+            .ollamaApi(api)
+            .defaultOptions(options)
+            .build();
     }
 
-    private Object createOpenAiCompatibleModel(ModelConfig config) {
-        throw new UnsupportedOperationException("filled in Stage 6");
+    private ChatOptions buildOpenAiOptions(ModelConfig config, BigDecimal temperature,
+                                           Integer maxTokens, BigDecimal topP) {
+        OpenAiChatOptions.Builder builder = OpenAiChatOptions.builder()
+            .model(config.getModelName());
+        if (temperature != null) {
+            builder.temperature(temperature.doubleValue());
+        }
+        if (maxTokens != null) {
+            builder.maxTokens(maxTokens);
+        }
+        if (topP != null) {
+            builder.topP(topP.doubleValue());
+        }
+        return builder.build();
+    }
+
+    private ChatOptions buildOllamaOptions(ModelConfig config, BigDecimal temperature,
+                                           Integer maxTokens, BigDecimal topP) {
+        OllamaOptions options = OllamaOptions.builder()
+            .model(config.getModelName())
+            .build();
+        if (temperature != null) {
+            options.setTemperature(temperature.doubleValue());
+        }
+        if (maxTokens != null) {
+            options.setMaxTokens(maxTokens);
+        }
+        if (topP != null) {
+            options.setTopP(topP.doubleValue());
+        }
+        return options;
     }
 
     String decryptKey(String encryptedKey) {
