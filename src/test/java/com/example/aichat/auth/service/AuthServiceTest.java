@@ -1,7 +1,11 @@
 package com.example.aichat.auth.service;
 
+import com.example.aichat.auth.entity.Role;
 import com.example.aichat.auth.entity.User;
+import com.example.aichat.auth.entity.UserRole;
+import com.example.aichat.auth.mapper.RoleMapper;
 import com.example.aichat.auth.mapper.UserMapper;
+import com.example.aichat.auth.mapper.UserRoleMapper;
 import com.example.aichat.auth.security.JwtTokenProvider;
 import com.example.aichat.common.exception.BusinessException;
 import com.example.aichat.common.exception.ErrorCode;
@@ -39,6 +43,10 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private com.example.aichat.model.service.ModelConfigService modelConfigService;
+    @Mock
+    private RoleMapper roleMapper;
+    @Mock
+    private UserRoleMapper userRoleMapper;
 
     @InjectMocks
     private AuthService authService;
@@ -61,6 +69,8 @@ class AuthServiceTest {
         when(userMapper.existsByEmail("alice@example.com")).thenReturn(false);
         when(modelConfigService.getFirstEnabledBuiltInModelId()).thenReturn("gpt-4o-mini");
         when(passwordEncoder.encode("alice123")).thenReturn("$2a$10$encoded");
+        when(roleMapper.findByCode("USER")).thenReturn(Optional.of(
+            Role.builder().id(1L).roleCode("USER").roleName("普通用户").build()));
         // mock insert 回填 auto-increment ID（模拟 MyBatis-Plus 行为）
         doAnswer(inv -> {
             User u = inv.getArgument(0);
@@ -76,6 +86,7 @@ class AuthServiceTest {
         assertThat(response.getUser().getUsername()).isEqualTo("alice");
 
         verify(userMapper).insert(any(User.class));
+        verify(userRoleMapper).insert(any(UserRole.class));
         verify(userSettingsMapper).insert(any(UserSettings.class));
     }
 

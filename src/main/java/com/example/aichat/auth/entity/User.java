@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.example.aichat.common.entity.BaseEntity;
 import lombok.*;
 
+import java.time.Instant;
+
 @TableName("users")
 @Getter
 @Setter
@@ -24,4 +26,8 @@ public class User extends BaseEntity {
     private String passwordHash;
 
     private String avatar;
+
+    private String status;       // enabled / disabled / pending
+
+    private Instant lastLoginAt;
 }

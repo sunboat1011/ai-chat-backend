@@ -1,7 +1,11 @@
 package com.example.aichat.auth.service;
 
+import com.example.aichat.auth.entity.Role;
 import com.example.aichat.auth.entity.User;
+import com.example.aichat.auth.entity.UserRole;
+import com.example.aichat.auth.mapper.RoleMapper;
 import com.example.aichat.auth.mapper.UserMapper;
+import com.example.aichat.auth.mapper.UserRoleMapper;
 import com.example.aichat.auth.security.JwtTokenProvider;
 import com.example.aichat.common.exception.BusinessException;
 import com.example.aichat.common.exception.ErrorCode;
@@ -28,6 +32,8 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final ModelConfigService modelConfigService;
+    private final RoleMapper roleMapper;
+    private final UserRoleMapper userRoleMapper;
 
     @Transactional
     public TokenResponse register(RegisterRequest request) {
@@ -43,8 +49,17 @@ public class AuthService {
             .username(request.getUsername())
             .email(request.getEmail())
             .passwordHash(passwordEncoder.encode(request.getPassword()))
+            .status("enabled")
             .build();
         userMapper.insert(user);
+
+        // 分配 USER 角色
+        Role userRole = roleMapper.findByCode("USER")
+            .orElseThrow(() -> new IllegalStateException("USER role not found"));
+        userRoleMapper.insert(UserRole.builder()
+            .userId(user.getId())
+            .roleId(userRole.getId())
+            .build());
 
         // 初始化默认用户设置
         UserSettings settings = createDefaultSettings(user.getId());

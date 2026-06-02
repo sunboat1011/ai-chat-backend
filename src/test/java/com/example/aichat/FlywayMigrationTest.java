@@ -45,7 +45,7 @@ class FlywayMigrationTest {
                 "SELECT version, description, success FROM flyway_schema_history ORDER BY version"
         );
 
-        assertThat(rows).hasSize(3);
+        assertThat(rows).hasSize(4);
         assertThat(rows.get(0).get("version")).isEqualTo("1");
         assertThat(rows.get(0).get("description")).isEqualTo("init schema");
         assertThat(rows.get(0).get("success")).isEqualTo(true);
@@ -55,6 +55,9 @@ class FlywayMigrationTest {
         assertThat(rows.get(2).get("version")).isEqualTo("3");
         assertThat(rows.get(2).get("description")).isEqualTo("alter messages add status");
         assertThat(rows.get(2).get("success")).isEqualTo(true);
+        assertThat(rows.get(3).get("version")).isEqualTo("4");
+        assertThat(rows.get(3).get("description")).isEqualTo("add user status and roles");
+        assertThat(rows.get(3).get("success")).isEqualTo(true);
     }
 
     @Test
@@ -67,7 +70,8 @@ class FlywayMigrationTest {
 
         assertThat(tables)
                 .contains("users", "conversations", "messages",
-                        "model_configs", "user_settings", "flyway_schema_history");
+                        "model_configs", "user_settings", "flyway_schema_history",
+                        "roles", "user_roles");
     }
 
     @Test
